@@ -33,7 +33,7 @@ convert() {
     echo "Converting $1 ..."
 }
 
-inotifywait -m -e close_write -e moved_to --format %f ~/RIP |
+inotifywait -m -e close_write -e moved_to --format %f "$WORKDIR" |
 	while read line
 	do
 	    if ts_p "$line";
