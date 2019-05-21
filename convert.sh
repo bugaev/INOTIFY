@@ -23,24 +23,26 @@ ts_p() {
 }
 
 convert() {
+    echo "Converting $1 ..."
     src_nodir="$1"
     echo "In convert: got src_nodir=$src_nodir<--"
     src_fullpath="$WORKDIR/$src_nodir"
     src_base=$(basename "$src_nodir" .ts)
     dst_fullpath="$WORKDIR/$src_base.m4v"
     dstlog_fullpath="$dst_fullpath.log"
+    # The line below is for testing. Its purpose is to introduce some time delay and to draw some CPU resources.
+    # nice md5sum "$WORKDIR/*_20190516_0100.ts" | tee "$dstlog_fullpath"
     nice $EXE -i "$src_fullpath" -o "$dst_fullpath" -e x264 -q 20 --audio-lang-list eng --subtitle-lang-list eng --all-subtitles   --subtitle-burned=none 2>&1 | tee "$dstlog_fullpath"
-    echo "Converting $1 ..."
 }
 
-inotifywait -m -e close_write -e moved_to --format %f "$WORKDIR" |
-	while read line
-	do
-	    if ts_p "$line";
-	    then
-		time convert "$line"
-	    else
-		echo "Got $line, doing nothing."
-	    fi
-	done
+exec 3< <(inotifywait -m -e close_write -e moved_to --format %f "$WORKDIR")
+while read -u 3 line
+do
+    if ts_p "$line";
+    then
+	time convert "$line"
+    else
+	echo "Got $line, doing nothing."
+    fi
+done
 
